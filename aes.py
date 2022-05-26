@@ -24,7 +24,11 @@ def ByteSub(vec):
     return vec
 
 def AddRoundKey(round,state):
-    return state^w[round*4]
+    print("inside roundkey funx")
+    roundKey = w[round*4]+w[round*4+1]+w[round*4+2]+w[round*4+3]
+    printhex(roundKey)
+    printhex(state)
+    return state^roundKey
 
 
 def KeyExpansion(key,keysize):
@@ -46,7 +50,7 @@ def KeyExpansion(key,keysize):
         w.append(w[4*(i+1)+1]^w[4*i+2])
         w.append(w[4*(i+1)+2]^w[4*i+3])
 
-    #
+    
 
 """Get hex representation of an ascii string"""
 def getHexFromAscii(str):
@@ -81,11 +85,9 @@ def main():
 
 
 
-
-    print(type(bitvectordemo.Sbox[23]))
-
+   
     print("1st state")
-    print(AddRoundKey(0,BitVector(hexstring=plainText)))
+    printhex(AddRoundKey(0,BitVector(hexstring=plainTextHex)))
 
 
 
