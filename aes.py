@@ -46,34 +46,7 @@ def KeyExpansion(key,keysize):
         w.append(w[4*(i+1)+1]^w[4*i+2])
         w.append(w[4*(i+1)+2]^w[4*i+3])
 
-    # w=[]
-    # key = getHexFromAscii(key)
-    # key = BitVector(hexstring = key)
-    # print(key)
-    # for i in range(0,keysize,32):
-    #     w.append(key[i:i+32])
-    # w.append(w[3])
-
-    # w[4]=w[4]<<8
-    # print(w[4],"hmm")
-    # myhexstring = w[4].get_bitvector_in_hex()
-    # print(f'{w[4]},{myhexstring}',{bytearray.fromhex(myhexstring).decode()})
-
-    # w[4] = ByteSub(w[4])
-    # print(type(w[4]),"hmm2")
-    # myhexstring = w[4].get_bitvector_in_hex()
-    # print(f'{w[4]},{myhexstring}')
-    # rc = BitVector(intVal=RCON[0], size=8)
-    # rc = rc + BitVector(intVal = 0, size = 24)
-    # print(f'rc={rc}')
-    # printhex(rc)
-    # w[4]=rc^w[4]
-    # myhexstring = w[4].get_bitvector_in_hex()
-    # print(f'{w[4]},{myhexstring}')
-    # w[4]=w[4]^w[0]
-    # myhexstring = w[4].get_bitvector_in_hex()
-    # print(f'{w[4]},{myhexstring}')
-    # return w
+    #
 
 """Get hex representation of an ascii string"""
 def getHexFromAscii(str):
