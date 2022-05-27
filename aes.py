@@ -16,8 +16,13 @@ def printhex(a):
     myhexstring = a.get_bitvector_in_hex()
     print(f'{a},{myhexstring}')
 
+
 RCON = [0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80,0x1b,0x36]
 w=[]
+mixColMatrix = np.array([[2,3,1,1],
+                         [1,2,3,1],
+                         [1,1,2,3],
+                         [3,1,1,2]])
 
 """byte substitution useing sBox"""
 def ByteSub(vec,size):
@@ -41,7 +46,6 @@ def KeyExpansion(key,keysize):
     for i in range(0,keysize,32):
         w.append(key[i:i+32])
     
-    
     for i in range(0,10):
         newWord=w[4*(i+1)-1][8:32]+w[4*(i+1)-1][0:8] #circular byte left-shift
         newWord = ByteSub(newWord,32) #byte substitution
@@ -57,7 +61,7 @@ def KeyExpansion(key,keysize):
 def ShiftRow(state):
     #construct temporary nparray from bitvector
     temp = np.zeros(shape=(4,4),dtype=int)
-    for j in range(4):
+    for j in range(4):  
         for i in range(4):
             loc=j*4+i
             temp[i,j]=state[loc*8:loc*8+8].intValue()
@@ -73,6 +77,41 @@ def ShiftRow(state):
             loc=j*4+i
             ret += BitVector(intVal=temp[i,j],size=8)
     return ret    
+
+
+def MixColumn(state):
+    #construct temporary nparray from bitvector
+    temp = np.zeros(shape=(4,4),dtype=int)
+    ans = np.zeros(shape=(4,4),dtype=int)
+    for j in range(4):  
+        for i in range(4):
+            loc=j*4+i
+            temp[i,j]=state[loc*8:loc*8+8].intValue()
+    
+    #finite field multiplication
+    AES_modulus = BitVector(bitstring='100011011')
+
+    for i in range(4):
+        for j in range(4):
+            for k in range(4):
+                a = BitVector(intVal=mixColMatrix[i,k],size=8)
+                b = BitVector(intVal=temp[k,j],size=8)
+                # print(f'{a},{b},{a.gf_multiply(b)}')
+                # print(a.gf_multiply(b).intValue())
+                # print("before:",ans[i,j])
+                ans[i,j]^=a.gf_multiply_modular(b,AES_modulus,8).intValue()
+                # print("aftere:",ans[i,j])
+    print(ans)
+    #bitvector from nparray
+    ret = BitVector(size = 0)
+    for j in range(4):
+        for i in range(4):
+            loc=j*4+i
+            ret += BitVector(intVal=ans[i,j],size=8)
+            # printhex(ret)
+    return ret 
+
+
 
 
 """Get hex representation of an ascii string"""
@@ -105,11 +144,7 @@ def main():
         myhexstring = el.get_bitvector_in_hex()
         #print(f'idx-{idx}->{el},{myhexstring}',{bytearray.fromhex(myhexstring).decode(errors="ignore")})
     
-        
-
-
-
-   
+           
     print("1st state")
     state = AddRoundKey(0,BitVector(hexstring=plainTextHex))
     printhex(state)
@@ -121,6 +156,14 @@ def main():
 
     state = ShiftRow(state)
     print("after shift row:")
+    printhex(state)
+
+    state = MixColumn(state)
+    print("after mix col:")
+    printhex(state)
+
+    state = AddRoundKey(1,state)
+    print("after round 1:")
     printhex(state)
 
 
