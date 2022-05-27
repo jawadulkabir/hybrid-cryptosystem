@@ -1,5 +1,6 @@
+from tempfile import tempdir
 from BitVector import *
-from numpy import size
+import numpy as np
 import bitvectordemo
 # bv = BitVector(hexstring="02")
 # print(bv)
@@ -18,16 +19,18 @@ def printhex(a):
 RCON = [0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80,0x1b,0x36]
 w=[]
 
-def ByteSub(vec):
-    for i in range(0,32,8):
+"""byte substitution useing sBox"""
+def ByteSub(vec,size):
+    for i in range(0,size,8):
         vec[i:i+8]=BitVector(intVal=bitvectordemo.Sbox[vec[i:i+8].intValue()],size=8)
     return vec
 
+"""takes input the round and a 128 bit BitVector as state matrix"""
 def AddRoundKey(round,state):
     print("inside roundkey funx")
     roundKey = w[round*4]+w[round*4+1]+w[round*4+2]+w[round*4+3]
-    printhex(roundKey)
-    printhex(state)
+    # printhex(roundKey)
+    # printhex(state) 
     return state^roundKey
 
 
@@ -41,7 +44,7 @@ def KeyExpansion(key,keysize):
     
     for i in range(0,10):
         newWord=w[4*(i+1)-1][8:32]+w[4*(i+1)-1][0:8] #circular byte left-shift
-        newWord = ByteSub(newWord) #byte substitution
+        newWord = ByteSub(newWord,32) #byte substitution
         rc = BitVector(intVal=RCON[i], size=8)
         rc = rc + BitVector(intVal = 0, size = 24)
         newWord=rc^newWord ##adding round constant
@@ -50,12 +53,33 @@ def KeyExpansion(key,keysize):
         w.append(w[4*(i+1)+1]^w[4*i+2])
         w.append(w[4*(i+1)+2]^w[4*i+3])
 
+"""shift rows of the input BitVector accordingly"""
+def ShiftRow(state):
+    #construct temporary nparray from bitvector
+    temp = np.zeros(shape=(4,4),dtype=int)
+    for j in range(4):
+        for i in range(4):
+            loc=j*4+i
+            temp[i,j]=state[loc*8:loc*8+8].intValue()
     
+    #left shift each row of array accordingly
+    for i in range(1,4):
+        temp[i,:]=np.roll(temp[i,:],-i)
+
+    #bitvector from nparray
+    ret = BitVector(size = 0)
+    for j in range(4):
+        for i in range(4):
+            loc=j*4+i
+            ret += BitVector(intVal=temp[i,j],size=8)
+    return ret    
+
 
 """Get hex representation of an ascii string"""
 def getHexFromAscii(str):
     return str.encode('utf-8').hex()
 
+    
     
 def main():
 
@@ -79,7 +103,7 @@ def main():
     KeyExpansion(key,128)
     for idx,el in enumerate(w):
         myhexstring = el.get_bitvector_in_hex()
-        print(f'idx-{idx}->{el},{myhexstring}',{bytearray.fromhex(myhexstring).decode(errors="ignore")})
+        #print(f'idx-{idx}->{el},{myhexstring}',{bytearray.fromhex(myhexstring).decode(errors="ignore")})
     
         
 
@@ -87,7 +111,17 @@ def main():
 
    
     print("1st state")
-    printhex(AddRoundKey(0,BitVector(hexstring=plainTextHex)))
+    state = AddRoundKey(0,BitVector(hexstring=plainTextHex))
+    printhex(state)
+
+
+    print("\nsubbyte")
+    state = ByteSub(state,128)
+    printhex(state)
+
+    state = ShiftRow(state)
+    print("after shift row:")
+    printhex(state)
 
 
 
