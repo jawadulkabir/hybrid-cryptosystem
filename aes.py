@@ -1,4 +1,3 @@
-from tempfile import tempdir
 from BitVector import *
 import numpy as np
 import bitvectordemo
@@ -17,6 +16,7 @@ def printhex(a):
     print(f'{a},{myhexstring}')
 
 
+
 RCON = [0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80,0x1b,0x36]
 w=[]
 mixColMatrix = np.array([[2,3,1,1],
@@ -24,25 +24,26 @@ mixColMatrix = np.array([[2,3,1,1],
                          [1,1,2,3],
                          [3,1,1,2]])
 
+
+
 """byte substitution useing sBox"""
 def ByteSub(vec,size):
     for i in range(0,size,8):
         vec[i:i+8]=BitVector(intVal=bitvectordemo.Sbox[vec[i:i+8].intValue()],size=8)
     return vec
 
+
+
 """takes input the round and a 128 bit BitVector as state matrix"""
 def AddRoundKey(round,state):
-    print("inside roundkey funx")
     roundKey = w[round*4]+w[round*4+1]+w[round*4+2]+w[round*4+3]
-    # printhex(roundKey)
-    # printhex(state) 
     return state^roundKey
 
 
 def KeyExpansion(key,keysize):
     key = getHexFromAscii(key)
-    key = BitVector(hexstring = key)
     print(key)
+    key = BitVector(hexstring = key)
     for i in range(0,keysize,32):
         w.append(key[i:i+32])
     
@@ -56,6 +57,7 @@ def KeyExpansion(key,keysize):
         w.append(w[4*(i+1)]^w[4*i+1])
         w.append(w[4*(i+1)+1]^w[4*i+2])
         w.append(w[4*(i+1)+2]^w[4*i+3])
+
 
 """shift rows of the input BitVector accordingly"""
 def ShiftRow(state):
@@ -96,21 +98,14 @@ def MixColumn(state):
             for k in range(4):
                 a = BitVector(intVal=mixColMatrix[i,k],size=8)
                 b = BitVector(intVal=temp[k,j],size=8)
-                # print(f'{a},{b},{a.gf_multiply(b)}')
-                # print(a.gf_multiply(b).intValue())
-                # print("before:",ans[i,j])
                 ans[i,j]^=a.gf_multiply_modular(b,AES_modulus,8).intValue()
-                # print("aftere:",ans[i,j])
-    print(ans)
-    #bitvector from nparray
+    
     ret = BitVector(size = 0)
     for j in range(4):
         for i in range(4):
             loc=j*4+i
             ret += BitVector(intVal=ans[i,j],size=8)
-            # printhex(ret)
     return ret 
-
 
 
 
@@ -118,55 +113,39 @@ def MixColumn(state):
 def getHexFromAscii(str):
     return str.encode('utf-8').hex()
 
+
+def encryption(key,plainText):
+    KeyExpansion(key,128)
+    plainTextHex = getHexFromAscii(plainText)
+    print(plainTextHex)
+    
+    #0th round
+    state = AddRoundKey(0,BitVector(hexstring=plainTextHex))
+
+    #10 rounds
+    for i in range(1,11):
+        state = ByteSub(state,128)
+        state = ShiftRow(state)
+        if i!=10:
+            state = MixColumn(state)
+        state = AddRoundKey(i,state)
+
+    cipherText = state.get_bitvector_in_hex()
+    return cipherText
     
     
 def main():
+    # plainText = "Two One Nine Two"
 
-    # a=BitVector(hexstring="5")
-    # b=BitVector(hexstring="0")
-    # c=a+b
-    # print(type(c))
-    # printhex(c)
+    # key = "Thats my Kung Fu"
 
-    plainText = "Two One Nine Two"
-    plainTextHex = plainText.encode('utf-8').hex()
-    print(plainTextHex)
+    plainText = "CanTheyDoTheirFe"
 
-    key = "Thats my Kung Fu"
-    keyHex = key.encode('utf-8').hex()
-
-    print(keyHex)
-
+    key = "BUET CSE17 Batch" 
     print("============")
 
-    KeyExpansion(key,128)
-    for idx,el in enumerate(w):
-        myhexstring = el.get_bitvector_in_hex()
-        #print(f'idx-{idx}->{el},{myhexstring}',{bytearray.fromhex(myhexstring).decode(errors="ignore")})
-    
-           
-    print("1st state")
-    state = AddRoundKey(0,BitVector(hexstring=plainTextHex))
-    printhex(state)
-
-
-    print("\nsubbyte")
-    state = ByteSub(state,128)
-    printhex(state)
-
-    state = ShiftRow(state)
-    print("after shift row:")
-    printhex(state)
-
-    state = MixColumn(state)
-    print("after mix col:")
-    printhex(state)
-
-    state = AddRoundKey(1,state)
-    print("after round 1:")
-    printhex(state)
-
-
+    cipherText = encryption(key,plainText)
+    print(cipherText)
 
 
 if __name__=="__main__":
