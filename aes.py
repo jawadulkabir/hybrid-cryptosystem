@@ -97,7 +97,7 @@ def MixColumn(state):
     for i in range(4):
         for j in range(4):
             for k in range(4):
-                a = BitVector(intVal=mixColMatrix[i,k],size=8)
+                a = bitvectordemo.Mixer[i][k]
                 b = BitVector(intVal=temp[k,j],size=8)
                 ans[i,j]^=a.gf_multiply_modular(b,AES_modulus,8).intValue()
     
@@ -133,20 +133,42 @@ def encryption(key,plainText):
 
     cipherText = state.get_bitvector_in_hex()
     return cipherText
+
+# def decryption(key,cipherText):
+#     w=KeyExpansion(key,128)
+#     cipherTextHex = getHexFromAscii(cipherText)
+#     print(cipherTextHex)
+
+#     for i in range(0,10):
+#         round = 10-i
+#         state = AddRoundKey(round,state,w)
+#         if i!=0:
+#             state = MixColumn(state)
+#         state=ShiftRow(state)
+#         state
     
     
 def main():
-    plainText = "Two One Nine Two"
+    # plainText = "Two One Nine Two"
 
-    key = "Thats my Kung Fu"
+    # key = "Thats my Kung Fu"
+    print(len(bitvectordemo.Mixer))
 
-    # plainText = "CanTheyDoTheirFe"
+    plainText = "CanTheyDoTheirFe"
 
-    # key = "BUET CSE17 Batch" 
+    key = "BUET CSE17 Batch" 
     print("============")
 
     cipherText = encryption(key,plainText)
-    print(cipherText)
+    print(type(cipherText))
+
+    import codecs
+
+    my_string = cipherText
+    my_string_bytes = bytes(my_string, encoding='utf-8')
+
+    binary_string = codecs.decode(my_string_bytes, "hex")
+    print(str(binary_string, 'Cp1252'))
 
 
 if __name__=="__main__":
