@@ -18,7 +18,6 @@ def printhex(a):
 
 
 RCON = [0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80,0x1b,0x36]
-w=[]
 mixColMatrix = np.array([[2,3,1,1],
                          [1,2,3,1],
                          [1,1,2,3],
@@ -35,12 +34,13 @@ def ByteSub(vec,size):
 
 
 """takes input the round and a 128 bit BitVector as state matrix"""
-def AddRoundKey(round,state):
+def AddRoundKey(round,state,w):
     roundKey = w[round*4]+w[round*4+1]+w[round*4+2]+w[round*4+3]
     return state^roundKey
 
 
 def KeyExpansion(key,keysize):
+    w=[]
     key = getHexFromAscii(key)
     print(key)
     key = BitVector(hexstring = key)
@@ -57,6 +57,7 @@ def KeyExpansion(key,keysize):
         w.append(w[4*(i+1)]^w[4*i+1])
         w.append(w[4*(i+1)+1]^w[4*i+2])
         w.append(w[4*(i+1)+2]^w[4*i+3])
+    return w
 
 
 """shift rows of the input BitVector accordingly"""
@@ -115,12 +116,12 @@ def getHexFromAscii(str):
 
 
 def encryption(key,plainText):
-    KeyExpansion(key,128)
+    w=KeyExpansion(key,128)
     plainTextHex = getHexFromAscii(plainText)
     print(plainTextHex)
     
     #0th round
-    state = AddRoundKey(0,BitVector(hexstring=plainTextHex))
+    state = AddRoundKey(0,BitVector(hexstring=plainTextHex),w)
 
     #10 rounds
     for i in range(1,11):
@@ -128,20 +129,20 @@ def encryption(key,plainText):
         state = ShiftRow(state)
         if i!=10:
             state = MixColumn(state)
-        state = AddRoundKey(i,state)
+        state = AddRoundKey(i,state,w)
 
     cipherText = state.get_bitvector_in_hex()
     return cipherText
     
     
 def main():
-    # plainText = "Two One Nine Two"
+    plainText = "Two One Nine Two"
 
-    # key = "Thats my Kung Fu"
+    key = "Thats my Kung Fu"
 
-    plainText = "CanTheyDoTheirFe"
+    # plainText = "CanTheyDoTheirFe"
 
-    key = "BUET CSE17 Batch" 
+    # key = "BUET CSE17 Batch" 
     print("============")
 
     cipherText = encryption(key,plainText)
