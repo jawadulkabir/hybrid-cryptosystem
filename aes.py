@@ -213,37 +213,42 @@ def getCipherFromHex(hexStr):
 
 """encrypt the plain text using extended key w"""
 def encryption(w,plainText):
-    plainTextHex = getHexFromAscii(plainText)
-    
-    #0th round
-    state = AddRoundKey(0,BitVector(hexstring=plainTextHex),w)
+    cipherText = ""
+    for chunk in range(0,len(plainText),16):
+        ptext = plainText[chunk:chunk+16]
+        plainTextHex = getHexFromAscii(ptext)
+        
+        #0th round
+        state = AddRoundKey(0,BitVector(hexstring=plainTextHex),w)
 
-    #10 rounds
-    for i in range(1,11):
-        state = ByteSub(state,128)
-        state = ShiftRow(state)
-        if i!=10:
-            state = MixColumn(state)
-        state = AddRoundKey(i,state,w)
-
-    cipherText = state.get_bitvector_in_hex()
+        #10 rounds
+        for i in range(1,11):
+            state = ByteSub(state,128)
+            state = ShiftRow(state)
+            if i!=10:
+                state = MixColumn(state)
+            state = AddRoundKey(i,state,w)
+        cipherText += state.get_bitvector_in_hex()
     return cipherText
 
 
 """decrypt the cipher text using extended key w"""
 def decryption(w,cipherText):
-    cipherTextHex = getHexFromCipher(cipherText)
+    plainText = ""
+    for chunk in range(0,len(cipherText),16):
+        ctext = cipherText[chunk:chunk+16]
+        cipherTextHex = getHexFromCipher(ctext)
 
-    state = AddRoundKey(10,BitVector(hexstring=cipherTextHex),w)
+        state = AddRoundKey(10,BitVector(hexstring=cipherTextHex),w)
 
-    for i in range(0,10):
-        state = InvShiftRow(state)
-        state = InvByteSub(state,128)
-        state = AddRoundKey(9-i,state,w)
-        if i!=9:
-            state = InvMixColumn(state)
+        for i in range(0,10):
+            state = InvShiftRow(state)
+            state = InvByteSub(state,128)
+            state = AddRoundKey(9-i,state,w)
+            if i!=9:
+                state = InvMixColumn(state)
 
-    plainText = state.get_bitvector_in_hex()
+        plainText += state.get_bitvector_in_hex()
     return plainText
 
 
@@ -262,17 +267,15 @@ def validateInput(key,plainText):
 
 
 def main():
-    plainText = "Two One Nine Two"
+    plainText = "Two One Nine Two five432one"
 
-    key = "Thurigherer df"
+    key = "6767667767676Thurigherer df"
 
     # plainText = "CanTheyDoTheirFe"
 
     # key = "BUET CSE17 Batch" 
 
     key, plainText = validateInput(key, plainText)
-    print(key,len(key))
-    print(plainText,len(plainText))
 
     keyStart = time.time()
     w=KeyExpansion(key,128)

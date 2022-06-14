@@ -64,8 +64,6 @@ while True:
     else:
         print("DOES NOT MATCH")
 
-    # print(f'{plainText}={decipheredText}')
-
     c.close()
 
     break
